@@ -1,15 +1,15 @@
 " Auto-Install plugged if it's not already installed.
-if !empty(glob('~/.vim/autoload')) && empty(glob('~/.vim/autoload/plug.vim'))
+if !empty(glob('~/.vim/')) && empty(glob('~/.vim/autoload/plug.vim'))
   " linux version
   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 
-if !empty(glob('~/AppData/Local/nvim/autoload')) && empty(glob('~/AppData/Local/nvim/autoload/plug.vim'))
+if !empty(glob('~/AppData/Local/nvim/')) && empty(glob('~/AppData/Local/nvim/autoload/plug.vim'))
   " windows version
-  silent !curl -fLo ~/AppData/Local/nvim/autoload/plug.vim --create-dirs
-    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  call system("md " . expand("~/AppData/Local/nvim/autoload/"))
+  call system("curl -o " . expand("~/AppData/Local/nvim/autoload/plug.vim") . " https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim")
   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 
@@ -773,6 +773,7 @@ set mouse=a
 if exists('g:fvim_loaded')
 	nnoremap <leader>ff :FVimToggleFullScreen<CR>
 	FVimCursorSmoothBlink v:true
+    FVimToggleFullScreen
 endif
 
 " Make built in vim file browser act more like nerd tree
@@ -788,3 +789,7 @@ imap jj <Esc>
 
 :nnoremap <Leader>q :Bdelete<CR>
 
+if !empty(glob('~/AppData/Local/nvim/'))
+    " Windows specific
+    command! Powershell terminal powershell
+endif
