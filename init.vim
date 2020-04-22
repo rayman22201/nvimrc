@@ -69,6 +69,7 @@ Plug 'tpope/vim-eunuch'
 Plug 'gcmt/taboo.vim'
 Plug 'jlanzarotta/bufexplorer'
 Plug 'moll/vim-bbye'
+Plug 'chaoren/vim-wordmotion'
 
 " themes
 Plug 'drewtempelmeyer/palenight.vim'
