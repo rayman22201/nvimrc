@@ -794,3 +794,7 @@ if !empty(glob('~/AppData/Local/nvim/'))
     " Windows specific
     command! Powershell terminal powershell
 endif
+
+if !empty(glob('~/.vim/'))
+    let $PATH .= ':/home/ray/.local/bin'
+endif
