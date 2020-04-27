@@ -1,7 +1,7 @@
 " Auto-Install plugged if it's not already installed.
-if !empty(glob('~/.vim/')) && empty(glob('~/.vim/autoload/plug.vim'))
+if !empty(glob('~/.config/nvim/')) && empty(glob('~/.config/nvim/autoload/plug.vim'))
   " linux version
-  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+  silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
