@@ -793,8 +793,12 @@ imap jj <Esc>
 if !empty(glob('~/AppData/Local/nvim/'))
     " Windows specific
     command! Powershell terminal powershell
+    call serverstart('localhost:58973') 
 endif
 
 if !empty(glob('~/.vim/'))
     let $PATH .= ':/home/ray/.local/bin'
+    let ips = split(system('hostname -I'))
+    call serverstart(ips[0] . ':58973') 
 endif
+
