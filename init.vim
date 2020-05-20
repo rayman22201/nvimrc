@@ -1,17 +1,20 @@
 " Auto-Install plugged if it's not already installed.
-if !empty(glob('~/.config/nvim/')) && empty(glob('~/.config/nvim/autoload/plug.vim'))
-  " linux version
-  silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
-    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+if has('win32') 
+    if !empty(glob('~/AppData/Local/nvim/')) && empty(glob('~/AppData/Local/nvim/autoload/plug.vim'))
+      " windows version
+      call system("md " . expand("~/AppData/Local/nvim/autoload/"))
+      call system("curl -o " . expand("~/AppData/Local/nvim/autoload/plug.vim") . " https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim")
+      autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+    endif
+else
+    if !empty(glob('~/.config/nvim/')) && empty(glob('~/.config/nvim/autoload/plug.vim'))
+      " linux version
+      silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+      autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+    endif
 endif
 
-if !empty(glob('~/AppData/Local/nvim/')) && empty(glob('~/AppData/Local/nvim/autoload/plug.vim'))
-  " windows version
-  call system("md " . expand("~/AppData/Local/nvim/autoload/"))
-  call system("curl -o " . expand("~/AppData/Local/nvim/autoload/plug.vim") . " https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim")
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
-endif
 
 " Specify a directory for plugins
 " - For Neovim: stdpath('data') . '/plugged'
@@ -790,13 +793,10 @@ imap jj <Esc>
 
 :nnoremap <Leader>q :Bdelete<CR>
 
-if !empty(glob('~/AppData/Local/nvim/'))
-    " Windows specific
+if has('win32') 
     command! Powershell terminal powershell
     call serverstart('localhost:58973') 
-endif
-
-if !empty(glob('~/.vim/'))
+else
     let $PATH .= ':/home/ray/.local/bin'
     let ips = split(system('hostname -I'))
     call serverstart(ips[0] . ':58973') 
