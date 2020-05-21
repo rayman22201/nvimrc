@@ -74,6 +74,8 @@ Plug 'jlanzarotta/bufexplorer'
 Plug 'moll/vim-bbye'
 Plug 'chaoren/vim-wordmotion'
 
+Plug 'rayman22201/openurl.vim'
+
 " themes
 Plug 'drewtempelmeyer/palenight.vim'
 
@@ -802,3 +804,41 @@ else
     call serverstart(ips[0] . ':58973') 
 endif
 
+function! Get_visual_selection()
+    " Why is this not a built-in Vim script function?!
+    let [line_start, column_start] = getpos("'<")[1:2]
+    let [line_end, column_end] = getpos("'>")[1:2]
+    let lines = getline(line_start, line_end)
+    if len(lines) == 0
+        return ''
+    endif
+    let lines[-1] = lines[-1][: column_end - (&selection == 'inclusive' ? 1 : 2)]
+    let lines[0] = lines[0][column_start - 1:]
+    return join(lines, "\n")
+endfunction
+
+function! Select_and_search()
+    let term = Get_visual_selection()
+    if len(term) == 0
+        term = expand("<cword>")
+    endif
+    call OpenUrlSearch(term)
+endfunction
+
+" open url shortcuts
+vnoremap <leader>os :<C-U>call Select_and_search()<CR>
+nnoremap <leader>ol :OpenUrl<CR>
+
+" split and terminal all in one go. Give me more tmux like behavior
+nnoremap <leader>vt :vsplit<CR>:term<CR>
+nnoremap <leader>st :split<CR>:term<CR>
+
+" remote copy paste
+let g:CopyPastePort = "53227"
+function! Remote_copy_send()
+    let buffer = Get_visual_selection()
+    call system("nc localhost " . g:CopyPastePort . " -q0 <<EOF\n" . buffer . "\nEOF")
+    echo "remote copy sent"
+endfunction
+
+vnoremap <leader>yy :<C-U>call Remote_copy_send()<CR>
