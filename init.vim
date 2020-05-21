@@ -837,7 +837,10 @@ nnoremap <leader>st :split<CR>:term<CR>
 let g:CopyPastePort = "53227"
 function! Remote_copy_send()
     let buffer = Get_visual_selection()
-    call system("nc localhost " . g:CopyPastePort . " -q0 <<EOF\n" . buffer . "\nEOF")
+    let buffer = substitute(buffer, '\$', '\\\$', "g")
+    let buffer = substitute(buffer, '"', '\\"', "g")
+    echo buffer
+    call system("echo \"" . buffer . "\" | nc localhost " . g:CopyPastePort . " -q0")
     echo "remote copy sent"
 endfunction
 
