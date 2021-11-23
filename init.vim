@@ -15,50 +15,45 @@ else
     endif
 endif
 
+let g:python3_host_prog = '/home/ray/bin/python'
+" must be defined before vim polyglot is loaded
+let g:polyglot_disabled = ['markdown', 'c', 'cpp']
+
+let g:coq_settings = { 'auto_start': 'shut-up', 'keymap.jump_to_mark': ',j', 'keymap.eval_snips': '<leader>e' }
 
 " Specify a directory for plugins
 " - For Neovim: stdpath('data') . '/plugged'
 " - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.vim/plugged')
 
-" Shorthand notat"ion; fetches https://github.com/junegunn/vim-easy-align
+" nvim-cmp completion engine
 Plug 'junegunn/vim-easy-align'
 Plug 'scrooloose/nerdcommenter'
 
-Plug 'Valloric/YouCompleteMe'
+Plug 'tpope/vim-fugitive'
 Plug 'Shougo/echodoc.vim'
 Plug 'raimon49/requirements.txt.vim', {'for': 'requirements'}
-Plug 'tpope/vim-fugitive'
-Plug 'junegunn/gv.vim'
-Plug 'davidhalter/jedi-vim', { 'for': 'python' }
 Plug 'hynek/vim-python-pep8-indent', { 'for': 'python' }
 Plug 'tell-k/vim-autopep8', { 'for': 'python' }
-Plug 'jiangmiao/auto-pairs'
 Plug 'sheerun/vim-polyglot'
 Plug 'othree/csscomplete.vim'
 Plug 'chrisbra/colorizer'
 Plug 'maksimr/vim-jsbeautify'
-Plug 'alvan/vim-closetag'
 Plug 'Valloric/MatchTagAlways'
 Plug 'heavenshell/vim-jsdoc'
 Plug 'lepture/vim-jinja'
-Plug 'SirVer/ultisnips'
 Plug 'tpope/vim-markdown', { 'for': 'markdown' }
 Plug 'Yggdroot/indentLine'
 Plug 'nacitar/a.vim'
 Plug 'rdolgushin/gitignore.vim'
 Plug 'matze/vim-move'
-Plug 'rhysd/clever-f.vim'
-Plug 'ctrlpvim/ctrlp.vim'
-Plug 'dense-analysis/ale'
 Plug 'peitalin/vim-jsx-typescript', { 'for': 'typescript.jsx' }
 Plug 'fatih/vim-go'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-repeat'
+Plug 'jiangmiao/auto-pairs'
 
-Plug 'honza/vim-snippets'
 Plug 'airblade/vim-gitgutter'
-Plug 'severin-lemaignan/vim-minimap', { 'on':  'MinimapToggle' }
 Plug 'tpope/vim-surround'
 Plug 'foosoft/vim-argwrap', { 'on': 'ArgWrap' }
 Plug 'itchyny/lightline.vim'
@@ -68,13 +63,22 @@ Plug 'milkypostman/vim-togglelist'
 " Uncomment the below plugin in no patched font is available
 Plug 'ryanoasis/vim-devicons'
 
-Plug 'tpope/vim-eunuch'
 Plug 'gcmt/taboo.vim'
 Plug 'jlanzarotta/bufexplorer'
 Plug 'moll/vim-bbye'
-Plug 'chaoren/vim-wordmotion'
 
 Plug 'rayman22201/openurl.vim'
+Plug 'epheien/termdbg'
+
+Plug 'neovim/nvim-lspconfig'
+
+Plug 'junegunn/fzf'
+Plug 'junegunn/fzf.vim'
+
+" coq autocomplete
+Plug 'ms-jpq/coq_nvim', {'branch': 'coq'}
+" 9000+ Snippets
+Plug 'ms-jpq/coq.artifacts', {'branch': 'artifacts'}
 
 " themes
 Plug 'drewtempelmeyer/palenight.vim'
@@ -82,7 +86,90 @@ Plug 'drewtempelmeyer/palenight.vim'
 " Initialize plugin system
 call plug#end()
 
-set tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+" init lsp and coq integration
+lua << EOF
+local nvim_lsp = require "lspconfig"
+local coq = require "coq"
+
+-- Use an on_attach function to only map the following keys
+-- after the language server attaches to the current buffer
+local on_attach = function(client, bufnr)
+  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+
+  -- Mappings.
+  local opts = { noremap=true, silent=true }
+
+  -- See `:help vim.lsp.*` for documentation on any of the below functions
+  buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
+  buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
+  buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+  buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
+  -- buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+  buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
+  buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
+  buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
+  buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
+  buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
+  buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
+  buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+  buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
+  buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
+  buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
+  buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
+  buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
+
+end
+
+-- Use a loop to conveniently call 'setup' on multiple servers and
+-- map buffer local keybindings when the language server attaches
+nvim_lsp['clangd'].setup(
+  coq.lsp_ensure_capabilities(
+    {
+      on_attach = on_attach,
+      flags = {
+        debounce_text_changes = 150
+      }
+    }
+  )
+)
+
+local function goto_definition(split_cmd)
+  local util = vim.lsp.util
+  local log = require("vim.lsp.log")
+  local api = vim.api
+
+  -- note, this handler style is for neovim 0.5.1/0.6, if on 0.5, call with function(_, method, result)
+  local handler = function(_, result, ctx)
+    if result == nil or vim.tbl_isempty(result) then
+      local _ = log.info() and log.info(ctx.method, "No location found")
+      return nil
+    end
+
+    if split_cmd then
+      vim.cmd(split_cmd)
+    end
+
+    if vim.tbl_islist(result) then
+      util.jump_to_location(result[1])
+
+      if #result > 1 then
+        util.set_qflist(util.locations_to_items(result))
+        api.nvim_command("copen")
+        api.nvim_command("wincmd p")
+      end
+    else
+      util.jump_to_location(result)
+    end
+  end
+
+  return handler
+end
+
+vim.lsp.handlers["textDocument/definition"] = goto_definition('split')
+EOF
+
+set tabstop=2 shiftwidth=2 softtabstop=2 expandtab
 set number
 
 :tnoremap <Esc> <C-\><C-n>
@@ -126,21 +213,6 @@ let g:ycm_semantic_triggers =  {
             \   'haskell' : ['.', 're!.']
             \ }
 
-" jedi-vim settings
-let g:jedi#show_call_signatures_delay = 0
-let g:jedi#popup_select_first = 0
-let g:jedi#show_call_signatures = 1
-let g:jedi#goto_command = "<leader>g"
-let g:jedi#goto_assignments_command = ""
-let g:jedi#goto_definitions_command = "<C-]>"
-let g:jedi#documentation_command = "<leader>d"
-let g:jedi#usages_command = "<C-^>"
-let g:jedi#completions_command = "<C-Space>"
-let g:jedi#rename_command = "<leader>e"
-let g:jedi#use_tabs_not_buffers = 1
-let g:jedi#force_py_version = 3
-let g:jedi#completions_enabled = 0
-
 
 " Enable some IDE-like features for JS / TS and Java
 autocmd FileType java,javascript,jsx,typescript,tsx nmap <silent> <C-]> :YcmCompleter GoToDefinition<CR>
@@ -158,20 +230,6 @@ endif
 set updatetime=100
 
 
-" make YCM compatible with UltiSnips
-let g:ycm_key_list_select_completion=[]
-let g:ycm_key_list_previous_completion=[]
-
-
-" Ultisnips settings
-let g:UltiSnipsExpandTrigger='<tab>'
-let g:UltiSnipsJumpForwardTrigger='<tab>'
-let g:UltiSnipsJumpBackwardTrigger='<s-tab>'
-let g:UltiSnipsListSnippets = '<c-b>'
-let g:UltiSnipsSnippetsDir=expand("~/.vim/CustomSnippets")
-let g:UltiSnipsSnippetDirectories=["CustomSnippets", "UltiSnips"]
-
-
 " Echodoc enabled
 let g:echodoc#enable_at_startup = 1
 
@@ -187,8 +245,7 @@ let g:clever_f_fix_key_direction = 1
 
 
 " Polyglot plugin settings
-let g:polyglot_disabled = ['markdown', 'c', 'cpp']
-let g:vim_json_syntax_conceal = 0
+let g:vim_json_syntax_conceal = 1
 let g:markdown_syntax_conceal = 0
 let g:javascript_plugin_flow = 0
 let g:markdown_fenced_languages = ['html', 'python', 'javascript', 'typescript', 'cpp', 'java', 'bash=sh']
@@ -196,55 +253,10 @@ let g:jsx_ext_required = 0
 let g:javascript_plugin_jsdoc = 1
 
 
-" Ale (autolinting) settings
-let g:ale_sign_column_always = 1
-let g:ale_sign_error = '>>'
-let g:ale_sign_warning = '>>'
-
-augroup OnStopLintingGroup
-    autocmd!
-    autocmd User ALEJobStarted call lightline#update()
-    autocmd User ALELintPost call lightline#update()
-    autocmd User ALEFixPost call lightline#update()
-augroup END
-
-let g:ale_python_flake8_options = '--ignore=W391,F821,F403 --max-line-length=120'
-let g:ale_completion_enabled = 0
-
-hi link ALEErrorSign DiffDelete
-hi link ALEError Error
-hi link ALEWarning Search
-
-nmap <silent>[e <Plug>(ale_previous_wrap)
-nmap <silent>]e <Plug>(ale_next_wrap)
-
-let g:ale_typescript_tslint_config_path = $HOME . '/.vim/tslint.json'
-let g:ale_linters = {
-\   'javascript': ['eslint', 'tsserver'],
-\   'typescript': ['tslint', 'tsserver']
-\}
-
-let g:ale_fixers = {
-\   'typescript': ['tslint'],
-\}
-
-let g:ale_lint_on_text_changed = 'normal'
-let g:ale_lint_on_insert_leave = 1
-
-let g:ale_pattern_options = {
-\   '.*\.cpp$': {'ale_enabled': 0},
-\   '.*\.c$': {'ale_enabled': 0},
-\   '.*\.hpp$': {'ale_enabled': 0},
-\   '.*\.h$': {'ale_enabled': 0},
-\   '.*\.C$': {'ale_enabled': 0},
-\   '.*\.CPP$': {'ale_enabled': 0},
-\   '.*\.H$': {'ale_enabled': 0},
-\   '.*\.HPP$': {'ale_enabled': 0}
-\}
 
 " QuickFix / Location list settings
 nmap <script> <silent> <leader>l :call ToggleLocationList()<CR>
-nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
+"nmap <script> <silent> <leader>q :call ToggleQuickfixList()<CR>
 
 " go through location lists in general
 nmap <silent>]l :lnext<CR>
@@ -269,7 +281,6 @@ au BufNewFile,BufRead *.html,*.htm,*.shtml,*.stm set ft=jinja.html
 autocmd FileType css,less setlocal omnifunc=csscomplete#CompleteCSS
 autocmd FileType html,markdown,jinja setlocal omnifunc=htmlcomplete#CompleteTags
 autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-autocmd FileType python setlocal omnifunc=jedi#completions
 autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
 autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
 
@@ -317,7 +328,6 @@ nnoremap <C-H> <C-W><C-H>
 set splitbelow
 set splitright
 
-
 " reduces splits to a single line
 set wmh=0
 
@@ -345,8 +355,11 @@ try
   set t_Co=256
 endtry
 set background=dark
-if (has("termguicolors"))
-    set termguicolors
+" Enable true color
+if exists('+termguicolors')
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+  set termguicolors
 endif
 
 colorscheme palenight
@@ -437,10 +450,6 @@ set timeoutlen=1000 ttimeoutlen=0
 nnoremap <silent> <F6> :!clear;python3 %<CR>
 nnoremap <silent> <F5> :!clear;python %<CR>
 
-" Minimap settings
-let g:minimap_highlight='Visual'
-nnoremap <silent> <Leader>m :MinimapToggle<CR>
-
 " Tabs
 nnoremap th  :tabfirst<CR>
 nnoremap tj  :tabnext<CR>
@@ -453,14 +462,13 @@ nnoremap td  :tabclose<CR>
 nnoremap tr :TabooRename
 
 " Change Macro recorder binding
-noremap <leader>q q
+noremap <leader>m q
 map q <Nop>
-nnoremap <space> @q
+nnoremap <space> @m
 
 " Special filetype settings
 au FileType python setl colorcolumn=80
 au FileType rst setl colorcolumn=70
-au FileType json,cpp,c,nim setl tabstop=2 softtabstop=2 et shiftwidth=2
 
 " JSDoc Generation hotkey (should be used on the function signature)
 nmap <silent> <leader>j ?function<cr>:noh<cr><Plug>(jsdoc)
@@ -793,7 +801,7 @@ nnoremap bh :bp<CR>
 nnoremap bl :bn<CR>
 imap jj <Esc>
 
-:nnoremap <Leader>q :Bdelete<CR>
+:nnoremap <Leader>x :Bdelete<CR>
 
 if has('win32') 
     command! Powershell terminal powershell
@@ -839,9 +847,25 @@ function! Remote_copy_send()
     let buffer = Get_visual_selection()
     let buffer = substitute(buffer, '\$', '\\\$', "g")
     let buffer = substitute(buffer, '"', '\\"', "g")
-    echo buffer
-    call system("echo \"" . buffer . "\" | nc localhost " . g:CopyPastePort . " -q0")
+"    echo buffer
+    call system("ssh prowl 'echo \"" . buffer . "\" | /home/ray/scripts/copy_pasta.py'")
     echo "remote copy sent"
 endfunction
-
 vnoremap <leader>yy :<C-U>call Remote_copy_send()<CR>
+
+function! Vsplit_new_term()
+    :vsplit
+    :term
+endfunction
+vnoremap <leader>vt :<C-U>call Vsplit_new_term()<CR>
+
+nnoremap <leader>ff :Files 
+nnoremap <leader>gh :Git log %<CR>
+nnoremap <leader>gb :Git blame<CR>
+
+let g:AutoPairsFlyMode = 1
+
+" always spell check markdown files (prevent HISTORY.md snafus)
+autocmd FileType markdown syntax spell toplevel 
+autocmd FileType markdown set spell 
+
